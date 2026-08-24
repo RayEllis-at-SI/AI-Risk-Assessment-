@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Risk Assessment Wizard</title>
+<style>
+  :root{
+    --navy: #0B1130;
+    --navy2: #121A44;
+    --blue: #0F6CBD;
+    --blue-light: #4C9AE8;
+    --purple: #6E5ADB;
+    --purple-light: #9C8FF0;
+    --paper: #F6F7FB;
+    --card: #FFFFFF;
+    --ink: #1B1F2E;
+    --ink-soft: #5B6172;
+    --line: #E1E4EE;
+    --low: #237A57;
+    --low-bg: #E6F5EE;
+    --med: #A97400;
+    --med-bg: #FDF1DC;
+    --high: #B84E1B;
+    --high-bg: #FDEADD;
+    --crit: #B23A3A;
+    --crit-bg: #FBE6E6;
+    --font-display: "Space Grotesk", "Segoe UI", Arial, sans-serif;
+    --font-body: "Inter", "Segoe UI", Arial, sans-serif;
+    --font-mono: "IBM Plex Mono", "Consolas", monospace;
+  }
+
+  @font-face {
+    font-family: "Space Grotesk";
+    src: local("Space Grotesk");
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; background:var(--paper); font-family:var(--font-body); color:var(--ink); }
+
+  .wizard-root{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  .masthead{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom: 18px;
+  }
+  .shield-mark{
+    width:40px; height:40px; flex-shrink:0;
+  }
+  .masthead-text h1{
+    font-family: var(--font-display);
+    font-size: 22px;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--navy);
+  }
+  .masthead-text p{
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .doc-refs{
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+    letter-spacing: 0.02em;
+  }
+
+  .progress-rail{
+    display:flex;
+    gap: 5px;
+    margin-bottom: 24px;
+  }
+  .progress-seg{
+    flex:1;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--line);
+    transition: background 0.3s;
+  }
+  .progress-seg.done{ background: var(--blue); }
+  .progress-seg.current{ background: var(--purple); }
+
+  .step-label{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--purple);
+    margin-bottom: 6px;
+  }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(11,17,48,0.04);
+  }
+
+  .question{
+    font-family: var(--font-display);
+    font-size: 21px;
+    color: var(--navy);
+    margin: 0 0 6px;
+    line-height:1.3;
+  }
+  .question-help{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+    line-height:1.5;
+  }
+  .question-ref{
+    display:inline-block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--purple);
+    background: #F1EEFC;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  .options{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .opt{
+    display:flex;
+    align-items:flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align:left;
+    background: var(--card);
+  }
+  .opt:hover{ border-color: var(--blue-light); background: #F8FAFE; }
+  .opt.selected{
+    border-color: var(--blue);
+    background: #F0F6FD;
+  }
+  .opt-radio{
+    width: 18px; height:18px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    flex-shrink:0;
+    margin-top: 2px;
+    position: relative;
+  }
+  .opt.selected .opt-radio{ border-color: var(--blue); }
+  .opt.selected .opt-radio::after{
+    content:"";
+    position:absolute;
+    top:3px; left:3px; right:3px; bottom:3px;
+    border-radius:50%;
+    background: var(--blue);
+  }
+  .opt-text strong{
+    display:block;
+    font-size: 14.5px;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .opt-text span{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height:1.4;
+  }
+  .opt-flag{
+    margin-left:auto;
+    flex-shrink:0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color: var(--crit);
+    background: var(--crit-bg);
+    padding: 3px 7px;
+    border-radius: 6px;
+    align-self:center;
+  }
+
+  .field-row{ margin-bottom:16px; }
+  .field-row label{
+    display:block;
+    font-size: 12.5px;
+    font-weight:600;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .field-row input, .field-row textarea{
+    width:100%;
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    background: var(--paper);
+    resize: vertical;
+  }
+  .field-row input:focus, .field-row textarea:focus{
+    outline: 2px solid var(--blue-light);
+    outline-offset: 1px;
+  }
+
+  .nav-row{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin-top: 26px;
+  }
+  button{
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight:600;
+    border-radius: 8px;
+    padding: 11px 20px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+  button:active{ transform: scale(0.98); }
+  button:disabled{ opacity: 0.4; cursor:not-allowed; }
+  .btn-primary{ background: var(--blue); color: white; }
+  .btn-primary:hover:not(:disabled){ background: #0D5EA4; }
+  .btn-ghost{ background: transparent; color: var(--ink-soft); }
+  .btn-ghost:hover{ color: var(--navy); }
+
+  /* results screen */
+  .prohibited-banner{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    background: var(--crit-bg);
+    border: 1.5px solid var(--crit);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 22px;
+  }
+  .prohibited-banner .pb-icon{
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--crit);
+    flex-shrink:0;
+  }
+  .prohibited-banner h3{
+    margin:0 0 6px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--crit);
+  }
+  .prohibited-banner ul{
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+  .prohibited-banner li{
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .result-head{
+    display:flex;
+    align-items:center;
+    gap: 20px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .gauge{ width: 88px; height:88px; flex-shrink:0; }
+  .result-tier-label{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin: 0 0 4px;
+  }
+  .result-tier-name{
+    font-family: var(--font-display);
+    font-size: 26px;
+    margin: 0;
+    line-height:1.1;
+  }
+  .result-tier-sub{
+    font-size:13.5px;
+    color: var(--ink-soft);
+    margin: 4px 0 0;
+  }
+
+  .band-low .result-tier-label, .band-low .result-tier-name{ color: var(--low); }
+  .band-med .result-tier-label, .band-med .result-tier-name{ color: var(--med); }
+  .band-high .result-tier-label, .band-high .result-tier-name{ color: var(--high); }
+  .band-crit .result-tier-label, .band-crit .result-tier-name{ color: var(--crit); }
+
+  .badge-row{ display:flex; gap:8px; flex-wrap:wrap; margin: 4px 0 0; }
+  .badge{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--navy);
+  }
+  .badge.badge-agent{ background:#F1EEFC; border-color:#DCD4F8; color:var(--purple); }
+
+  .section-title{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--purple);
+    margin: 26px 0 10px;
+  }
+
+  .action-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .action-list li{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size: 14px;
+    line-height:1.5;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+  }
+  .action-list li .dot{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--blue);
+    margin-top:7px;
+    flex-shrink:0;
+  }
+  .action-list li .ref{
+    display:block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+
+  .compliance-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .compliance-cell{
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--paper);
+  }
+  .compliance-cell .cc-label{
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .compliance-cell .cc-value{
+    font-size: 14px;
+    font-weight:600;
+  }
+  .cc-value.req{ color: var(--crit); }
+  .cc-value.ok{ color: var(--low); }
+  .cc-value.na{ color: var(--ink-soft); }
+
+  .summary-box{
+    margin-top: 22px;
+    background: var(--navy);
+    color: #DCE3F5;
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .summary-box b{ color: white; }
+
+  .copy-row{ display:flex; gap:10px; margin-top:14px; }
+
+  .toast{
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--navy);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events:none;
+  }
+  .toast.show{ opacity: 1; }
+
+  @media (max-width: 700px){
+    .card{ padding: 22px; }
+    .result-head{ flex-direction:column; align-items:flex-start; }
+    .compliance-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wizard-root" id="root"></div>
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+(function(){
+
+  // ---------- shield icon (brand mark) ----------
+  const shieldSVG = `
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 2 L36 8 V19 C36 29 29 35 20 38 C11 35 4 29 4 19 V8 L20 2 Z" fill="#0F6CBD"/>
+    <path d="M20 2 L36 8 V19 C36 29 29 35 20 38 Z" fill="#6E5ADB" opacity="0.55"/>
+  </svg>`;
+
+  // ======================================================================
+  // Steps, scoring, and thresholds below mirror the Risk Assessment
+  // Criteria table in IS-PROC-AI-001 (AI Tool Intake & Risk Assessment
+  // Process) Section 3, the Tier definitions in IS-STD-AI-001
+  // (AI Security Standard) Annex C, the Agent Classification Framework in
+  // IS-STD-AI-002 (Agentic AI Security Standard) Section 4 / Annex A, and
+  // the hard prohibitions in IS-STD-AI-001 Section 3.1 / IS-POL-AI-001
+  // Section 4.2-4.3. Point values are taken directly from those tables so
+  // the score and the ">=15 => Tier 3" rule stay consistent with the
+  // source documents.
+  // ======================================================================
+
+  const steps = [
+    {
+      id: "intro",
+      type: "info",
+      title: "AI Risk Assessment",
+      help: "Answer questions about the AI tool or agent you want to use, build, or approve. You'll get an indicative Tier / Agent Class, the hard prohibitions that may apply, and the approvals required before proceeding — aligned to IS-POL-AI-001, IS-STD-AI-001, IS-STD-AI-002 and IS-PROC-AI-001. This is a pre-screening aid, not a substitute for the formal AI Tool Intake Process."
+    },
+    {
+      id: "meta",
+      type: "fields",
+      title: "What are we assessing?",
+      help: "This information mirrors Section 1 of the AI Tool Request Form (IS-FORM-AI-001) so it can be carried straight into an AI-TOOL-REQUEST ticket.",
+      fields: [
+        { key: "toolName", label: "AI tool / system name", placeholder: "e.g. Internal support chatbot, Vendor X copilot" },
+        { key: "vendor", label: "Vendor / provider", placeholder: "e.g. Built internally, or vendor legal entity name" },
+        { key: "requester", label: "Your name", placeholder: "e.g. Jane Ellis" },
+        { key: "department", label: "Team / department", placeholder: "e.g. Customer Success" },
+        { key: "useCase", label: "Intended use case", placeholder: "What will it be used for, and by whom?", type: "textarea" }
+      ]
+    },
+    {
+      id: "isAgent",
+      type: "choice",
+      title: "Does this system take autonomous actions?",
+      help: "Per IS-POL-AI-001 / IS-STD-AI-002: an AI Agent perceives its environment and executes actions (writing data, executing code, sending communications, calling APIs, spawning sub-agents) without human approval for each step — as opposed to an assistive tool that only produces output for human review.",
+      ref: "IS-POL-AI-001 §3 · IS-STD-AI-002 §2",
+      key: "isAgent",
+      scored: false,
+      options: [
+        { v: 0, t: "No — assistive tool", d: "Generates output (text, code, analysis) for a human to review and act on.", flag:"notAgent" },
+        { v: 1, t: "Yes — autonomous agent", d: "Can independently take actions with real-world effect, e.g. via LangChain, AutoGen, CrewAI, or MCP-based agents.", flag:"isAgent" }
+      ]
+    },
+    {
+      id: "dataSensitivity",
+      type: "choice",
+      title: "What is the highest sensitivity of data involved?",
+      help: "Risk Factor: Data Sensitivity.",
+      ref: "IS-PROC-AI-001 §3 — Data Sensitivity",
+      key: "dataSensitivity",
+      scored: true,
+      max: 8,
+      options: [
+        { v: 0, t: "Public data only", d: "Nothing confidential, personal, CUI, PHI, or Restricted." },
+        { v: 3, t: "Internal / Confidential business data", d: "Non-public but not personal data, PHI, or CUI." },
+        { v: 8, t: "Personal data, PHI, or CUI", d: "Any data covered by GDPR, HIPAA, or FedRAMP CUI obligations." }
+      ]
+    },
+    {
+      id: "restrictedData",
+      type: "choice",
+      title: "Is any Restricted-classified data involved?",
+      help: "Data classified as Restricted must NOT be entered into any AI tool under any circumstances — no exceptions without VP, Information Security and Legal sign-off.",
+      ref: "IS-STD-AI-001 §3.1.1 (3.1.1 table, \"Restricted\" row)",
+      key: "restrictedData",
+      scored: false,
+      options: [
+        { v: 0, t: "No", d: "No Restricted or Top Secret data is involved." },
+        { v: 1, t: "Yes", d: "Restricted data is or may be involved.", block: "restricted", flag:"PROHIBITED" },
+        { v: 1, t: "Unknown / not sure", d: "Treat as Restricted until confirmed otherwise.", block: "restricted", flag:"PROHIBITED" }
+      ]
+    },
+    {
+      id: "cuiFedramp",
+      type: "choice",
+      title: "Is CUI or federal customer data involved — and is a FedRAMP ATO in place?",
+      help: "Risk Factor: FedRAMP Status. CUI includes data from or about US federal agencies, data within Siteimprove's FedRAMP boundary, or anything a federal customer identifies as CUI.",
+      ref: "IS-PROC-AI-001 §3 — FedRAMP Status · IS-STD-AI-001 §3.1.4-3.1.5 (hard prohibition)",
+      key: "fedramp",
+      scored: true,
+      max: 15,
+      options: [
+        { v: 0, t: "No CUI / federal data involved", d: "Not applicable." },
+        { v: 0, t: "CUI involved — vendor holds current FedRAMP Moderate+ ATO", d: "ATO status verified on the authorised product list." },
+        { v: 15, t: "CUI involved — no FedRAMP ATO (or unknown)", d: "Hard prohibition. Using a non-FedRAMP-authorised tool for CUI is a critical compliance violation.", block: "cui", flag:"PROHIBITED" }
+      ]
+    },
+    {
+      id: "phiBaa",
+      type: "choice",
+      title: "Is Protected Health Information (PHI) involved — and is a BAA executed?",
+      help: "PHI must NOT be submitted to any AI tool without a signed Business Associate Agreement — even where the vendor holds ISO 27001 or SOC 2 certification.",
+      ref: "IS-STD-AI-001 §3.1.6-3.1.7",
+      key: "phiBaa",
+      scored: false,
+      options: [
+        { v: 0, t: "No PHI / health data involved", d: "Not applicable." },
+        { v: 0, t: "PHI involved — signed BAA executed with the vendor", d: "Only Tier 3 approved tools may process PHI; minimum-necessary standard applies." },
+        { v: 0, t: "PHI involved — no BAA (or unknown)", d: "Hard prohibition until a BAA is executed.", block: "phi", flag:"PROHIBITED" }
+      ]
+    },
+    {
+      id: "personalDpa",
+      type: "choice",
+      title: "Is personal data (GDPR) involved — and is a DPA in place?",
+      help: "Personal data must not be entered into an AI tool unless the vendor has a signed Data Processing Agreement with Siteimprove.",
+      ref: "IS-POL-AI-001 §4.2 · IS-STD-AI-001 §3.1.2",
+      key: "personalDpa",
+      scored: false,
+      options: [
+        { v: 0, t: "No personal data involved", d: "Not applicable." },
+        { v: 0, t: "Personal data involved — DPA executed with the vendor", d: "Lawful basis and data-subject rights documented." },
+        { v: 0, t: "Personal data involved — DPA not yet in place (or unknown)", d: "A DPA must be executed before this use case proceeds.", flag:"DPA REQUIRED" }
+      ]
+    },
+    {
+      id: "vendorCertifications",
+      type: "choice",
+      title: "What certifications does the vendor hold?",
+      help: "Risk Factor: Vendor Certifications. (Not applicable to internally built tools — select the top option.)",
+      ref: "IS-PROC-AI-001 §3 — Vendor Certifications",
+      key: "vendorCertifications",
+      scored: true,
+      max: 8,
+      options: [
+        { v: 0, t: "ISO 27001 + SOC 2 Type II", d: "Certificate less than 12 months old." },
+        { v: 3, t: "ISO 27001 or SOC 2 (one only)", d: "Only one of the two is held." },
+        { v: 8, t: "No relevant certification", d: "Neither certification is held or confirmed." }
+      ]
+    },
+    {
+      id: "trainingDataUse",
+      type: "choice",
+      title: "Will the vendor use Siteimprove data to train its models?",
+      help: "Risk Factor: Training Data Use.",
+      ref: "IS-PROC-AI-001 §3 — Training Data Use · IS-STD-AI-001 §3.1.3",
+      key: "trainingDataUse",
+      scored: true,
+      max: 10,
+      options: [
+        { v: 0, t: "Confirmed not used for training", d: "Vendor has confirmed in writing / contract." },
+        { v: 3, t: "Opt-out available", d: "Training use can be disabled but isn't off by default." },
+        { v: 10, t: "Used for training by default", d: "No confirmed opt-out." }
+      ]
+    },
+    {
+      id: "dataResidency",
+      type: "choice",
+      title: "Where is the data stored and processed?",
+      help: "Risk Factor: Data Residency.",
+      ref: "IS-PROC-AI-001 §3 — Data Residency · IS-STD-AI-001 §3.1.2",
+      key: "dataResidency",
+      scored: true,
+      max: 5,
+      options: [
+        { v: 0, t: "EU/EEA, or a country with an adequacy decision", d: "" },
+        { v: 2, t: "Standard Contractual Clauses (SCCs) in place", d: "" },
+        { v: 5, t: "Unknown or inadequate", d: "Residency not confirmed with the vendor." }
+      ]
+    },
+    {
+      id: "humanDecisionImpact",
+      type: "choice",
+      title: "Does the tool inform or make decisions about individuals?",
+      help: "Risk Factor: Human Decision Impact — e.g. hiring, performance ratings, or other decisions materially affecting a person.",
+      ref: "IS-PROC-AI-001 §3 — Human Decision Impact · IS-POL-AI-001 §4.4",
+      key: "humanDecisionImpact",
+      scored: true,
+      max: 8,
+      options: [
+        { v: 0, t: "No decisions about individuals", d: "" },
+        { v: 3, t: "Decisions with human review", d: "A qualified human reviews and signs off before action." },
+        { v: 8, t: "Automated decisions about individuals", d: "No meaningful human review before the decision takes effect." }
+      ]
+    },
+    {
+      id: "agenticCapability",
+      type: "choice",
+      title: "What is the system's highest-capability autonomous action?",
+      help: "Risk Factor: Agentic Capability. If this is not an agent, select the first option.",
+      ref: "IS-PROC-AI-001 §3 — Agentic Capability · IS-STD-AI-002 §4 (Class A/B/C)",
+      key: "agenticCapability",
+      scored: true,
+      max: 15,
+      options: [
+        { v: 0, t: "No autonomous actions", d: "Assistive tool only — output goes to a human for review." },
+        { v: 5, t: "Bounded write actions within a defined scope", d: "Can create/modify data in a limited, approved scope (Class B candidate)." },
+        { v: 15, t: "Autonomous orchestration, production access, or spawns sub-agents", d: "Highest-risk capability (Class C candidate)." }
+      ]
+    },
+    {
+      id: "actionReversibility",
+      type: "choice",
+      title: "Are the system's actions reversible?",
+      help: "Risk Factor: Action Reversibility.",
+      ref: "IS-PROC-AI-001 §3 — Action Reversibility · IS-STD-AI-002 §7 (HITL gates)",
+      key: "actionReversibility",
+      scored: true,
+      max: 12,
+      options: [
+        { v: 0, t: "No actions taken, or all actions fully reversible", d: "" },
+        { v: 4, t: "Some irreversible actions, with HITL gates in place", d: "e.g. deletion, external comms, production changes — all gated." },
+        { v: 12, t: "Irreversible actions possible without HITL approval", d: "This is a critical policy violation if the system is an agent (IS-STD-AI-002 §7.2).", flag:"HITL GAP" }
+      ]
+    },
+    {
+      id: "promptInjectionRisk",
+      type: "choice",
+      title: "Does the system process untrusted content (email, web, documents)?",
+      help: "Risk Factor: Prompt Injection Risk.",
+      ref: "IS-PROC-AI-001 §3 — Prompt Injection Risk · IS-STD-AI-002 §10",
+      key: "promptInjectionRisk",
+      scored: true,
+      max: 10,
+      options: [
+        { v: 0, t: "Not applicable", d: "No environmental content processing." },
+        { v: 3, t: "Processes some untrusted content — injection testing planned", d: "" },
+        { v: 10, t: "Processes untrusted email/web/documents — no injection testing done", d: "" }
+      ]
+    },
+    {
+      id: "vendorPenTest",
+      type: "choice",
+      title: "Has the vendor had a recent penetration test?",
+      help: "Risk Factor: Vendor Penetration Test.",
+      ref: "IS-PROC-AI-001 §3 — Vendor Penetration Test",
+      key: "vendorPenTest",
+      scored: true,
+      max: 5,
+      options: [
+        { v: 0, t: "Annual test; results available", d: "" },
+        { v: 2, t: "Conducted, but results not available", d: "" },
+        { v: 5, t: "Not conducted", d: "" }
+      ]
+    },
+    {
+      id: "incidentHistory",
+      type: "choice",
+      title: "Has the vendor had any security incidents?",
+      help: "Risk Factor: Incident History.",
+      ref: "IS-PROC-AI-001 §3 — Incident History",
+      key: "incidentHistory",
+      scored: true,
+      max: 8,
+      options: [
+        { v: 0, t: "No significant incidents", d: "" },
+        { v: 2, t: "Minor incidents, resolved", d: "" },
+        { v: 8, t: "Material breach in the past 24 months", d: "" }
+      ]
+    }
+  ];
+
+  const SCORED_KEYS = steps.filter(s => s.type === "choice" && s.scored).map(s => s.key);
+  const MAX_SCORE = steps.filter(s => s.type === "choice" && s.scored).reduce((a,s)=>a+s.max,0);
+
+  const state = {
+    stepIndex: 0,
+    answers: {},
+    meta: { toolName: "", vendor: "", requester: "", department: "", useCase: "" }
+  };
+
+  function totalScore(){
+    let s = 0;
+    SCORED_KEYS.forEach(k=>{
+      if (typeof state.answers[k] === "number") s += state.answers[k];
+    });
+    return s;
+  }
+
+  function getBlocks(){
+    const blocks = [];
+    steps.forEach(step=>{
+      if (step.type !== "choice") return;
+      const idx = state.answers[step.key+"_idx"];
+      if (idx === undefined) return;
+      const opt = step.options[idx];
+      if (opt && opt.block) blocks.push(opt.block);
+    });
+    return blocks;
+  }
+
+  function isAgent(){
+    return state.answers["isAgent_idx"] === 1;
+  }
+
+  function determineTier(score, blocks){
+    if (blocks.length) return "prohibited";
+    if (score >= 15) return 3;
+    const fedIdx = state.answers["fedramp_idx"];
+    const phiIdx = state.answers["phiBaa_idx"];
+    const hdiIdx = state.answers["humanDecisionImpact_idx"];
+    const dsIdx = state.answers["dataSensitivity_idx"];
+    if (fedIdx === 1 || phiIdx === 1 || hdiIdx === 2) return 3;
+    if (dsIdx === 2 || dsIdx === 1) return 2;
+    return 1;
+  }
+
+  function determineAgentClass(blocks){
+    if (!isAgent()) return null;
+    if (blocks.length) return "blocked";
+    const fedIdx = state.answers["fedramp_idx"];
+    const phiIdx = state.answers["phiBaa_idx"];
+    const capIdx = state.answers["agenticCapability_idx"];
+    if (fedIdx === 1 || phiIdx === 1) return "C";
+    if (capIdx === 2) return "C";
+    if (capIdx === 1) return "B";
+    return "A";
+  }
+
+  const tierMeta = {
+    1: {
+      name: "Tier 1 — Low Risk",
+      color: "var(--low)", band: "low",
+      sub: "Public / Internal data only. No personal data, customer data, or CUI.",
+      actions: [
+        { t: "If not already listed, submit an AI-TOOL-REQUEST ticket.", ref: "IS-PROC-AI-001 Step 1; IS-FORM-AI-001" },
+        { t: "Approval authority: Information Security team lead. Target SLA: 3 business days.", ref: "IS-PROC-AI-001 §4" },
+        { t: "Use a Siteimprove corporate account — personal/free accounts are prohibited for work use.", ref: "IS-POL-AI-001 §4.3; IS-STD-AI-001 Access Control" },
+        { t: "No DPA required (unless personal data is incidentally processed). SSO optional.", ref: "IS-STD-AI-001 Annex C — Tier 1" },
+        { t: "Annual review once approved.", ref: "IS-PROC-AI-001 §5.2" }
+      ]
+    },
+    2: {
+      name: "Tier 2 — Medium Risk",
+      color: "var(--med)", band: "med",
+      sub: "Confidential data and/or personal data with a DPA in place. No CUI.",
+      actions: [
+        { t: "Submit an AI-TOOL-REQUEST ticket and complete the AI Tool Risk Assessment (IS-TMPL-AI-001).", ref: "IS-PROC-AI-001 Steps 1 & 3" },
+        { t: "Approval authority: VP, Information Security (+ DPO where personal data is involved). Target SLA: 5–10 business days.", ref: "IS-PROC-AI-001 §4" },
+        { t: "Execute a Data Processing Agreement (GDPR Art. 28) before personal data is processed.", ref: "IS-STD-AI-001 §3.1.2" },
+        { t: "Corporate SSO is mandatory; no shared/generic accounts. MFA required even with SSO.", ref: "IS-STD-AI-001 Access Control Requirements" },
+        { t: "Confirm EU/EEA data residency (or SCCs) and verify the training-data opt-out.", ref: "IS-STD-AI-001 §3.1.2" },
+        { t: "Annual review.", ref: "IS-PROC-AI-001 §5.2" }
+      ]
+    },
+    3: {
+      name: "Tier 3 — High Risk",
+      color: "var(--high)", band: "high",
+      sub: "CUI, PHI, high-volume personal data, or automated decisions about individuals.",
+      actions: [
+        { t: "Full AI Tool Risk Assessment with parallel specialist review (DPO, Legal, and FedRAMP Lead as applicable).", ref: "IS-PROC-AI-001 Steps 3 & 4" },
+        { t: "Approval authority: VP, Information Security + DPO + Legal + Executive Sponsor. Target SLA: 15 business days.", ref: "IS-PROC-AI-001 §4" },
+        { t: "If CUI is involved: vendor must hold a current FedRAMP Moderate+ ATO — hard prohibition otherwise.", ref: "IS-STD-AI-001 §3.1.4-3.1.5" },
+        { t: "If PHI is involved: a signed BAA must be executed before any PHI is submitted.", ref: "IS-STD-AI-001 §3.1.6-3.1.7" },
+        { t: "Full audit trail (inputs/outputs) retained a minimum of 24 months; mandatory human oversight for decisions affecting individuals.", ref: "IS-STD-AI-001 Monitoring, Logging & Audit; §2.6.1" },
+        { t: "6-monthly full re-assessment, including FedRAMP ATO revalidation where applicable.", ref: "IS-PROC-AI-001 §5.2" }
+      ]
+    },
+    prohibited: {
+      name: "Prohibited",
+      color: "var(--crit)", band: "crit",
+      sub: "A hard prohibition applies. This use case cannot proceed as described.",
+      actions: [
+        { t: "Do not submit this data to any AI tool. Pause implementation immediately.", ref: "" },
+        { t: "Escalate to the VP, Information Security before any further action.", ref: "IS-STD-AI-001 §3.1.5" },
+        { t: "If already in use: report as a near-miss / AI incident immediately — do not delete evidence.", ref: "IS-PROC-AI-002 §2, §8" }
+      ]
+    }
+  };
+
+  const classMeta = {
+    A: {
+      name: "Class A — Passive Agent",
+      sub: "Read-only. Cannot write, modify, delete, or communicate outside approved read-only interfaces.",
+      actions: [
+        { t: "Dedicated read-only service identity via PAM. Never a personal or shared credential.", ref: "IS-STD-AI-002 §5.1" },
+        { t: "Approval authority: VP, Information Security (Tier 2-equivalent).", ref: "IS-STD-AI-002 §4" },
+        { t: "HITL not required for reads; informational outputs must still be validated before a human acts on them.", ref: "IS-STD-AI-002 §4, §7" },
+        { t: "Documented, tested kill switch. Halt SLA: 30 minutes, tested annually.", ref: "IS-STD-AI-002 §9" },
+        { t: "Annual behavioural baseline review.", ref: "IS-STD-AI-002 §14.3" }
+      ]
+    },
+    B: {
+      name: "Class B — Bounded Write Agent",
+      sub: "Can create/modify within a defined scope. Cannot delete, spawn sub-agents, or access production CUI/PHI.",
+      actions: [
+        { t: "Scoped write service identity via PAM. No admin rights.", ref: "IS-STD-AI-002 §5.1" },
+        { t: "Approval authority: VP, Information Security + DPO (if personal data). Executive sponsor if >50 users.", ref: "IS-STD-AI-002 §4" },
+        { t: "HITL gates REQUIRED for: any deletion, external communications, production deployments, and actions affecting >10 individuals.", ref: "IS-STD-AI-002 §7.1" },
+        { t: "Sandboxing and network isolation required; outbound connections restricted to an explicit allowlist.", ref: "IS-STD-AI-002 §8" },
+        { t: "Prompt injection adversarial testing required pre-deployment and annually.", ref: "IS-STD-AI-002 §10.2" },
+        { t: "Documented, tested kill switch. Halt SLA: 15 minutes, tested 6-monthly.", ref: "IS-STD-AI-002 §9.2" },
+        { t: "6-monthly behavioural review.", ref: "IS-STD-AI-002 §14.3" }
+      ]
+    },
+    C: {
+      name: "Class C — Autonomous Orchestrator",
+      sub: "Broad autonomous capability: can spawn sub-agents, access production systems, execute code in production.",
+      actions: [
+        { t: "Just-in-time, PAM-managed service identity; credentials rotated on a 90-day maximum cycle.", ref: "IS-STD-AI-002 §5.1" },
+        { t: "Approval authority: VP, Information Security + DPO + Legal + Executive Sponsor. CIO notified; Board notified if it touches financial systems or Restricted data.", ref: "IS-STD-AI-002 §4" },
+        { t: "HITL gates REQUIRED for ALL high-risk action categories (deletion, prod changes, external comms, financial transactions, CUI/PHI access, sub-agent spawning, ACL changes). No blanket pre-approvals.", ref: "IS-STD-AI-002 §7.1-7.2" },
+        { t: "Full adversarial assessment pre-deployment, annually, and after any major architecture change — must be independent of the build team.", ref: "IS-STD-AI-002 §12" },
+        { t: "Documented, tested kill switch. Halt SLA: 5 minutes, tested quarterly against production or production-equivalent conditions.", ref: "IS-STD-AI-002 §9.2" },
+        { t: "Real-time behavioural monitoring with SIEM integration; monthly drift review.", ref: "IS-STD-AI-002 §14" },
+        { t: "6-monthly review; full re-assessment after any architecture change.", ref: "IS-STD-AI-002 §4" }
+      ]
+    },
+    blocked: {
+      name: "Agent Classification — Blocked",
+      sub: "A hard prohibition applies before agent classification is meaningful. Resolve the prohibition first.",
+      actions: []
+    }
+  };
+
+  const AGENT_BASELINE_ACTIONS = [
+    { t: "Complete the Agent Intake pathway before any deployment — required for internally built, vendor-procured, or framework-based agents alike (LangChain, AutoGen, CrewAI, MCP-based, or equivalent).", ref: "IS-PROC-AI-001 STOP note; IS-POL-AI-001 §4.5" },
+    { t: "Never operate the agent under a personal, shared, or inherited human credential.", ref: "IS-STD-AI-002 §5; IS-POL-AI-001 §4.3" },
+    { t: "Document an approved Action Scope (systems, data, operations) before go-live — acting outside it is a security violation.", ref: "IS-STD-AI-002 §5.2" },
+    { t: "Deploying without a documented, tested kill switch is itself a policy violation.", ref: "IS-POL-AI-001 §4.3, §4.5" }
+  ];
+
+  const BLOCK_MESSAGES = {
+    restricted: {
+      title: "Restricted data",
+      text: "Data classified as Restricted must NOT be entered into any AI tool under any circumstances. No exceptions without VP, Information Security and Legal sign-off.",
+      ref: "IS-STD-AI-001 §3.1.1"
+    },
+    cui: {
+      title: "CUI without a FedRAMP ATO",
+      text: "Any AI tool that may process, store, or transmit CUI must hold a valid FedRAMP Moderate or higher Authority to Operate. Using a non-FedRAMP-authorised tool for federal customer data is a critical compliance violation and must be reported to the VP, Information Security immediately.",
+      ref: "IS-STD-AI-001 §3.1.4-3.1.5"
+    },
+    phi: {
+      title: "PHI without a signed BAA",
+      text: "PHI must NOT be submitted to any AI tool without a signed Business Associate Agreement — even where the tool holds ISO 27001 or SOC 2 certification.",
+      ref: "IS-STD-AI-001 §3.1.7"
+    }
+  };
+
+  function render(){
+    const root = document.getElementById("root");
+    const step = steps[state.stepIndex];
+    const isLast = state.stepIndex === steps.length; // results screen
+
+    let html = `
+      <div class="masthead">
+        <div class="shield-mark">${shieldSVG}</div>
+        <div class="masthead-text">
+          <h1>AI Risk Assessment</h1>
+          <p>Siteimprove Information Security · AI Governance</p>
+        </div>
+      </div>
+      <div class="doc-refs">Aligned to IS-POL-AI-001 · IS-STD-AI-001 · IS-STD-AI-002 · IS-PROC-AI-001</div>
+    `;
+
+    if (!isLast) {
+      html += renderProgress();
+      html += `<div class="card">` + renderStep(step) + renderNav(step) + `</div>`;
+    } else {
+      html += renderResults();
+    }
+
+    root.innerHTML = html;
+    attachHandlers(step, isLast);
+  }
+
+  function renderProgress(){
+    let segs = "";
+    steps.forEach((s, i)=>{
+      let cls = "progress-seg";
+      if (i < state.stepIndex) cls += " done";
+      else if (i === state.stepIndex) cls += " current";
+      segs += `<div class="${cls}"></div>`;
+    });
+    return `<div class="progress-rail">${segs}</div>`;
+  }
+
+  function renderStep(step){
+    if (step.type === "info") {
+      return `
+        <div class="question">${step.title}</div>
+        <div class="question-help">${step.help}</div>
+      `;
+    }
+    if (step.type === "fields") {
+      let fields = step.fields.map(f => {
+        if (f.type === "textarea") {
+          return `
+            <div class="field-row">
+              <label for="f-${f.key}">${f.label}</label>
+              <textarea id="f-${f.key}" rows="3" placeholder="${f.placeholder}" data-key="${f.key}">${state.meta[f.key] || ""}</textarea>
+            </div>
+          `;
+        }
+        return `
+          <div class="field-row">
+            <label for="f-${f.key}">${f.label}</label>
+            <input id="f-${f.key}" type="text" placeholder="${f.placeholder}" value="${state.meta[f.key] || ""}" data-key="${f.key}">
+          </div>
+        `;
+      }).join("");
+      return `
+        <div class="question">${step.title}</div>
+        <div class="question-help">${step.help}</div>
+        ${fields}
+      `;
+    }
+    if (step.type === "choice") {
+      const ref = step.ref ? `<div class="question-ref">${step.ref}</div>` : "";
+      let opts = step.options.map((o, i) => `
+        <div class="opt ${state.answers[step.key+"_idx"] === i ? "selected" : ""}" data-idx="${i}">
+          <div class="opt-radio"></div>
+          <div class="opt-text"><strong>${o.t}</strong>${o.d ? `<span>${o.d}</span>` : ""}</div>
+          ${o.flag ? `<div class="opt-flag">${o.flag}</div>` : ""}
+        </div>
+      `).join("");
+      return `
+        ${ref}
+        <div class="question">${step.title}</div>
+        <div class="question-help">${step.help}</div>
+        <div class="options">${opts}</div>
+      `;
+    }
+  }
+
+  function renderNav(step){
+    const isFirst = state.stepIndex === 0;
+    let canAdvance = true;
+    if (step.type === "choice" && state.answers[step.key+"_idx"] === undefined) canAdvance = false;
+
+    return `
+      <div class="nav-row">
+        <button class="btn-ghost" id="btn-back" ${isFirst ? "disabled" : ""}>Back</button>
+        <button class="btn-primary" id="btn-next" ${canAdvance ? "" : "disabled"}>
+          ${step.type === "info" ? "Start assessment" : (state.stepIndex === steps.length - 1 ? "See results" : "Next")}
+        </button>
+      </div>
+    `;
+  }
+
+  function renderResults(){
+    const score = totalScore();
+    const blocks = getBlocks();
+    const tierKey = determineTier(score, blocks);
+    const meta = tierMeta[tierKey];
+    const agentClass = determineAgentClass(blocks);
+    const gaugePct = Math.min(score / MAX_SCORE, 1);
+
+    const gauge = `
+      <svg viewBox="0 0 40 40" class="gauge">
+        <circle cx="20" cy="20" r="17" fill="none" stroke="#E1E4EE" stroke-width="4"/>
+        <circle cx="20" cy="20" r="17" fill="none"
+          stroke-width="4" stroke-linecap="round"
+          stroke-dasharray="${2*Math.PI*17}"
+          stroke-dashoffset="${2*Math.PI*17*(1-gaugePct)}"
+          transform="rotate(-90 20 20)"
+          style="stroke: ${meta.color}"/>
+        <text x="20" y="24" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="${meta.color}">${score}</text>
+      </svg>
+    `;
+
+    let bannerHtml = "";
+    if (blocks.length) {
+      const items = blocks.map(b => {
+        const m = BLOCK_MESSAGES[b];
+        return `<li><strong>${m.title}:</strong> ${m.text} <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);">(${m.ref})</span></li>`;
+      }).join("");
+      bannerHtml = `
+        <div class="prohibited-banner">
+          <div class="pb-icon">&#9888;</div>
+          <div>
+            <h3>Hard prohibition triggered</h3>
+            <ul>${items}</ul>
+          </div>
+        </div>
+      `;
+    }
+
+    const badges = `
+      <div class="badge-row">
+        <span class="badge">Score ${score} / ${MAX_SCORE}</span>
+        ${score >= 15 ? `<span class="badge" style="color:var(--high);border-color:var(--high);">&ge;15 pts &rarr; Tier 3 threshold met</span>` : ""}
+        ${agentClass && agentClass !== "blocked" ? `<span class="badge badge-agent">Agent Class ${agentClass}</span>` : ""}
+        ${isAgent() && agentClass === "blocked" ? `<span class="badge badge-agent">Agent classification blocked</span>` : ""}
+      </div>
+    `;
+
+    const actions = meta.actions.map(a => `
+      <li><div class="dot"></div><div>${a.t}${a.ref ? `<span class="ref">${a.ref}</span>` : ""}</div></li>
+    `).join("");
+
+    let agentSection = "";
+    if (isAgent() && agentClass && agentClass !== "blocked") {
+      const cm = classMeta[agentClass];
+      const agentActions = AGENT_BASELINE_ACTIONS.concat(cm.actions).map(a => `
+        <li><div class="dot"></div><div>${a.t}${a.ref ? `<span class="ref">${a.ref}</span>` : ""}</div></li>
+      `).join("");
+      agentSection = `
+        <div class="section-title">Agent classification: ${cm.name}</div>
+        <div class="question-help" style="margin-bottom:12px;">${cm.sub}</div>
+        <ul class="action-list">${agentActions}</ul>
+      `;
+    } else if (isAgent() && agentClass === "blocked") {
+      agentSection = `
+        <div class="section-title">Agent classification</div>
+        <div class="question-help">Resolve the hard prohibition above before this agent can be classified under IS-STD-AI-002 §4.</div>
+      `;
+    }
+
+    const dpaIdx = state.answers["personalDpa_idx"];
+    const phiIdx = state.answers["phiBaa_idx"];
+    const fedIdx = state.answers["fedramp_idx"];
+
+    const complianceGrid = `
+      <div class="compliance-grid">
+        <div class="compliance-cell">
+          <div class="cc-label">DPA (GDPR)</div>
+          <div class="cc-value ${dpaIdx === 2 ? 'req' : (dpaIdx === 1 ? 'ok' : 'na')}">
+            ${dpaIdx === undefined || dpaIdx === 0 ? "Not required" : (dpaIdx === 1 ? "In place" : "Required — not confirmed")}
+          </div>
+        </div>
+        <div class="compliance-cell">
+          <div class="cc-label">BAA (HIPAA)</div>
+          <div class="cc-value ${phiIdx === 2 ? 'req' : (phiIdx === 1 ? 'ok' : 'na')}">
+            ${phiIdx === undefined || phiIdx === 0 ? "Not required" : (phiIdx === 1 ? "In place" : "Required — not confirmed")}
+          </div>
+        </div>
+        <div class="compliance-cell">
+          <div class="cc-label">FedRAMP ATO</div>
+          <div class="cc-value ${fedIdx === 2 ? 'req' : (fedIdx === 1 ? 'ok' : 'na')}">
+            ${fedIdx === undefined || fedIdx === 0 ? "Not required" : (fedIdx === 1 ? "Confirmed" : "Required — not confirmed")}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const summaryText = buildSummaryText(score, tierKey, meta, agentClass, blocks);
+
+    return `
+      <div class="card band-${meta.band}">
+        ${bannerHtml}
+        <div class="result-head">
+          ${gauge}
+          <div>
+            <div class="result-tier-label">${state.meta.toolName || "Untitled assessment"}</div>
+            <div class="result-tier-name">${meta.name}</div>
+            <div class="result-tier-sub">${meta.sub}</div>
+            ${badges}
+          </div>
+        </div>
+
+        <div class="section-title">Required approvals &amp; next steps</div>
+        <ul class="action-list">${actions}</ul>
+
+        ${agentSection}
+
+        <div class="section-title">Data handling requirements</div>
+        ${complianceGrid}
+
+        <div class="section-title">Assessment summary</div>
+        <div class="summary-box" id="summary-text">${summaryText}</div>
+
+        <div class="copy-row">
+          <button class="btn-primary" id="btn-copy">Copy summary</button>
+          <button class="btn-ghost" id="btn-restart">Start new assessment</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function buildSummaryText(score, tierKey, meta, agentClass, blocks){
+    const lines = [];
+    lines.push(`AI RISK ASSESSMENT SUMMARY (pre-screening — not a substitute for IS-PROC-AI-001)`);
+    lines.push(`Tool/system: ${state.meta.toolName || "(not provided)"}`);
+    lines.push(`Vendor: ${state.meta.vendor || "(not provided)"}`);
+    lines.push(`Requested by: ${state.meta.requester || "(not provided)"}  |  Team: ${state.meta.department || "(not provided)"}`);
+    lines.push(`Use case: ${state.meta.useCase || "(not provided)"}`);
+    lines.push(`Date: ${new Date().toLocaleDateString()}`);
+    lines.push(``);
+    if (blocks.length) {
+      lines.push(`HARD PROHIBITION(S) TRIGGERED:`);
+      blocks.forEach(b => lines.push(`  - ${BLOCK_MESSAGES[b].title} (${BLOCK_MESSAGES[b].ref})`));
+      lines.push(``);
+    }
+    lines.push(`Result: ${meta.name}  (score ${score}/${MAX_SCORE})`);
+    if (agentClass && agentClass !== "blocked") lines.push(`Agent Class: ${agentClass} — ${classMeta[agentClass].name}`);
+    lines.push(``);
+    lines.push(`Answers:`);
+    steps.filter(s=>s.type==="choice").forEach(s=>{
+      const idx = state.answers[s.key+"_idx"];
+      const label = idx !== undefined ? s.options[idx].t : "(unanswered)";
+      lines.push(`  - ${s.title} -> ${label}`);
+    });
+    lines.push(``);
+    lines.push(`Required next steps:`);
+    meta.actions.forEach(a => lines.push(`  - ${a.t}${a.ref ? ` [${a.ref}]` : ""}`));
+    if (agentClass && agentClass !== "blocked") {
+      AGENT_BASELINE_ACTIONS.concat(classMeta[agentClass].actions).forEach(a => lines.push(`  - ${a.t}${a.ref ? ` [${a.ref}]` : ""}`));
+    }
+    return lines.join("\n");
+  }
+
+  function attachHandlers(step, isLast){
+    if (isLast) {
+      document.getElementById("btn-copy").addEventListener("click", ()=>{
+        const text = document.getElementById("summary-text").innerText;
+        navigator.clipboard.writeText(text).then(()=> showToast("Summary copied to clipboard"));
+      });
+      document.getElementById("btn-restart").addEventListener("click", ()=>{
+        state.stepIndex = 0;
+        state.answers = {};
+        state.meta = { toolName:"", vendor:"", requester:"", department:"", useCase:"" };
+        render();
+      });
+      return;
+    }
+
+    if (step.type === "fields") {
+      step.fields.forEach(f=>{
+        const el = document.getElementById("f-"+f.key);
+        el.addEventListener("input", (e)=>{ state.meta[f.key] = e.target.value; });
+      });
+    }
+
+    if (step.type === "choice") {
+      document.querySelectorAll(".opt").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const idx = parseInt(el.getAttribute("data-idx"), 10);
+          state.answers[step.key] = step.options[idx].v;
+          state.answers[step.key+"_idx"] = idx;
+          render();
+        });
+      });
+    }
+
+    const backBtn = document.getElementById("btn-back");
+    const nextBtn = document.getElementById("btn-next");
+    if (backBtn) backBtn.addEventListener("click", ()=>{
+      if (state.stepIndex > 0){ state.stepIndex--; render(); }
+    });
+    if (nextBtn) nextBtn.addEventListener("click", ()=>{
+      if (nextBtn.disabled) return;
+      state.stepIndex++;
+      render();
+    });
+  }
+
+  function showToast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(()=> t.classList.remove("show"), 2200);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
