@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Governance Readiness Ledger — ISO/IEC 42001 &amp; EU AI Act</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#101826;
+    --ink-soft:#1c2740;
+    --paper:#ECEEE6;
+    --paper-raised:#F6F7F2;
+    --line:#D3D7C9;
+    --line-strong:#B7BCAC;
+    --text:#16202E;
+    --text-muted:#5B6570;
+    --amber:#B8842E;
+    --amber-soft:#F1E3C8;
+    --teal:#2F6F62;
+    --teal-soft:#DCEAE4;
+    --red:#åA6402F;
+    --red-soft:#F1DCD5;
+    --grey-dial:#C7CBBD;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;}
+  h1,h2,h3,.display{font-family:'Fraunces',serif;}
+  code,.mono,.code{font-family:'IBM Plex Mono',monospace;}
+
+  .app{display:flex;min-height:100vh;}
+
+  /* Sidebar */
+  .rail{width:230px;flex:none;background:var(--ink);color:#DCE1E8;padding:28px 20px;position:sticky;top:0;height:100vh;}
+  .rail .brand{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:#fff;letter-spacing:.2px;margin-bottom:2px;}
+  .rail .brand-sub{font-size:11px;color:#8B96A8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:30px;}
+  .rail nav{display:flex;flex-direction:column;gap:2px;}
+  .rail button{all:unset;cursor:pointer;padding:10px 12px;border-radius:4px;font-size:13.5px;color:#B7C0CE;display:flex;align-items:center;justify-content:space-between;}
+  .rail button:hover{background:rgba(255,255,255,.06);color:#fff;}
+  .rail button.active{background:rgba(255,255,255,.1);color:#fff;font-weight:600;}
+  .rail .tag{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6B7688;}
+  .rail .rail-foot{margin-top:40px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;color:#6B7688;}
+
+  main{flex:1;padding:40px 52px 80px;max-width:980px;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  h1.page-title{font-size:30px;font-weight:600;margin:0 0 6px;color:var(--ink);}
+  .page-intro{color:var(--text-muted);max-width:620px;margin-bottom:32px;}
+
+  /* Setup */
+  .card{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:24px 26px;margin-bottom:20px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;}
+  label.field-label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+  input[type=text],input[type=date],select{width:100%;padding:9px 11px;border:1px solid var(--line-strong);border-radius:4px;background:#fff;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);}
+  input:focus,select:focus{outline:2px solid var(--ink-soft);outline-offset:1px;}
+
+  .checklist{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+  .checkline{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:5px;background:#fff;}
+  .checkline input{margin-top:3px;}
+  .checkline .cl-title{font-weight:600;font-size:13.5px;}
+  .checkline .cl-desc{color:var(--text-muted);font-size:12.5px;margin-top:2px;}
+
+  .btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:4px;font-size:13px;font-weight:600;}
+  .btn:hover{background:var(--ink-soft);}
+  .btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--line-strong);}
+  .btn.secondary:hover{background:rgba(0,0,0,.04);}
+  .btn-row{display:flex;gap:10px;margin-top:10px;}
+
+  /* Domain group heading */
+  .group-heading{display:flex;align-items:baseline;gap:10px;margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line-strong);}
+  .group-heading h2{font-size:18px;margin:0;font-weight:600;}
+  .group-heading .g-count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);}
+
+  /* Control ledger row */
+  .control{display:grid;grid-template-columns:64px 1fr 230px;gap:18px;align-items:start;padding:16px 4px;border-bottom:1px solid var(--line);}
+  .control:last-child{border-bottom:none;}
+  .control .code{font-size:11px;color:var(--text-muted);padding-top:3px;}
+  .control .c-name{font-weight:600;font-size:14px;margin-bottom:3px;}
+  .control .c-desc{color:var(--text-muted);font-size:12.8px;margin-bottom:8px;}
+  .control .c-crit{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 6px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+  .crit-3{background:var(--red-soft);color:var(--red);}
+  .crit-2{background:var(--amber-soft);color:var(--amber);}
+  .crit-1{background:var(--teal-soft);color:var(--teal);}
+
+  .dial{display:flex;flex-direction:column;gap:6px;}
+  .dial-ticks{display:flex;gap:4px;}
+  .tick{flex:1;height:22px;border:1px solid var(--line-strong);border-radius:3px;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);}
+  .tick.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .dial-label{font-size:10.5px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;}
+
+  /* Dashboard */
+  .gauge-row{display:flex;gap:20px;margin-bottom:34px;flex-wrap:wrap;}
+  .gauge-card{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:20px 22px;flex:1;min-width:220px;}
+  .gauge-card .g-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:10px;}
+  .gauge-card .g-value{font-family:'Fraunces',serif;font-size:38px;font-weight:600;color:var(--ink);}
+  .gauge-card .g-sub{font-size:12px;color:var(--text-muted);margin-top:4px;}
+
+  .radar-row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:36px;}
+  .radar-card{flex:1;min-width:300px;background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:18px 20px 8px;}
+  .radar-card h3{font-size:14px;margin:0 0 4px;font-weight:600;}
+  .radar-card .radar-sub{font-size:11.5px;color:var(--text-muted);margin-bottom:6px;}
+  .radar-legend{display:flex;gap:18px;justify-content:center;font-size:11px;color:var(--text-muted);margin-top:2px;padding-bottom:10px;}
+  .radar-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:12px;height:12px;border-radius:2px;display:inline-block;}
+  .swatch.fill{background:var(--ink);opacity:.55;}
+  .swatch.line{border:2px dashed var(--red);width:14px;height:0;background:none;}
+  .detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+  .detail-h{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin:0 0 12px;}
+  @media (max-width:820px){.detail-cols{grid-template-columns:1fr;}}
+
+  .barlist{display:flex;flex-direction:column;gap:14px;}
+  .barrow .b-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+  .b-top .b-name{font-weight:600;}
+  .b-track{height:10px;background:var(--line);border-radius:5px;overflow:hidden;position:relative;}
+  .b-fill{height:100%;background:var(--ink);border-radius:5px 0 0 5px;}
+  .b-target{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--red);}
+
+  /* Roadmap */
+  .rm-bucket{margin-bottom:30px;}
+  .rm-bucket h3{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+  .rm-bucket .rm-window{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);font-weight:400;}
+  table.rm-table{width:100%;border-collapse:collapse;background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:12.8px;}
+  table.rm-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);padding:9px 12px;border-bottom:1px solid var(--line-strong);background:rgba(0,0,0,.02);}
+  table.rm-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.rm-table tr:last-child td{border-bottom:none;}
+  .fw-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 6px;border-radius:3px;background:var(--paper);border:1px solid var(--line-strong);}
+  .score-shift{font-family:'IBM Plex Mono',monospace;font-size:12px;white-space:nowrap;}
+  select.owner-input, input.owner-input{border:1px solid var(--line-strong);border-radius:3px;padding:5px 6px;font-size:12px;width:100%;}
+
+  .empty-note{color:var(--text-muted);font-style:italic;padding:16px 0;}
+
+  @media print{
+    .rail, .btn-row, .no-print{display:none !important;}
+    main{padding:0;max-width:none;}
+    .view{display:block !important;}
+    body{background:#fff;}
+  }
+  @media (max-width:820px){
+    .app{flex-direction:column;}
+    .rail{position:relative;height:auto;width:100%;}
+    main{padding:24px;}
+    .control{grid-template-columns:1fr;}
+    .field-row{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="rail">
+    <div class="brand">Governance Ledger</div>
+    <div class="brand-sub">ISO 42001 · EU AI Act</div>
+    <nav id="navRail">
+      <button data-view="setup" class="active">Setup <span class="tag">00</span></button>
+      <button data-view="iso">ISO/IEC 42001 <span class="tag">01</span></button>
+      <button data-view="euai">EU AI Act <span class="tag">02</span></button>
+      <button data-view="dashboard">Dashboard <span class="tag">03</span></button>
+      <button data-view="roadmap">Roadmap <span class="tag">04</span></button>
+    </nav>
+    <div class="rail-foot">Assessment is stored only in this browser tab. Export to CSV or print before closing.</div>
+  </aside>
+
+  <main>
+
+    <!-- SETUP -->
+    <section class="view active" id="view-setup">
+      <div class="eyebrow">Step 00 — Scope</div>
+      <h1 class="page-title">Set up your assessment</h1>
+      <p class="page-intro">Name the assessment, set the maturity level you're aiming for, and tell the ledger which EU AI Act obligations apply to your organisation. This determines which controls appear in the EU AI Act section.</p>
+
+      <div class="card">
+        <div class="field-row">
+          <div>
+            <label class="field-label">Organisation / business unit</label>
+            <input type="text" id="orgName" placeholder="e.g. Acme Financial Services">
+          </div>
+          <div>
+            <label class="field-label">Assessment date</label>
+            <input type="date" id="assessDate">
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="field-label">Target maturity level (all controls)</label>
+            <select id="targetLevel">
+              <option value="2">Level 2 — Developing</option>
+              <option value="3" selected>Level 3 — Defined &amp; applied (typical baseline for certification/compliance)</option>
+              <option value="4">Level 4 — Managed &amp; continuously improved</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Assessor / role</label>
+            <input type="text" id="assessorName" placeholder="e.g. Head of AI Governance">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="field-label" style="margin-bottom:12px;">Which EU AI Act obligations apply to you?</label>
+        <div class="checklist">
+          <label class="checkline">
+            <input type="checkbox" id="flag-highrisk">
+            <span><span class="cl-title">We develop or deploy high-risk AI systems</span><br>
+            <span class="cl-desc">Annex III use cases — e.g. HR/recruitment, credit scoring, biometric ID, critical infrastructure, education, law enforcement, migration. Triggers Articles 9–15 and 43/49.</span></span>
+          </label>
+          <label class="checkline">
+            <input type="checkbox" id="flag-gpai">
+            <span><span class="cl-title">We provide a general-purpose AI (GPAI) model</span><br>
+            <span class="cl-desc">You place a foundation/general-purpose model on the market. Triggers Article 53 documentation, copyright and training-content obligations.</span></span>
+          </label>
+          <label class="checkline">
+            <input type="checkbox" id="flag-transparency">
+            <span><span class="cl-title">We use chatbots, synthetic media, or emotion/biometric recognition</span><br>
+            <span class="cl-desc">Any system that interacts directly with people, generates synthetic content, or infers emotion/biometric categories. Triggers Article 50 transparency notices.</span></span>
+          </label>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:14px;">Unsure which apply? Leave boxes unchecked and revisit after your AI system inventory (control EU‑1) is complete — reclassify as needed. The prohibited‑practices screen and AI‑literacy controls apply to every organisation regardless of selection.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="goTo('iso')">Start with ISO/IEC 42001 →</button>
+      </div>
+    </section>
+
+    <!-- ISO -->
+    <section class="view" id="view-iso">
+      <div class="eyebrow">Step 01 — ISO/IEC 42001:2023</div>
+      <h1 class="page-title">AI Management System controls</h1>
+      <p class="page-intro">Rate current maturity against each clause/Annex A control, 0 (not started) to 4 (managed &amp; optimised). Ratings drive the dashboard and roadmap automatically.</p>
+      <div id="isoContainer"></div>
+    </section>
+
+    <!-- EU AI Act -->
+    <section class="view" id="view-euai">
+      <div class="eyebrow">Step 02 — EU Artificial Intelligence Act</div>
+      <h1 class="page-title">Legal obligation controls</h1>
+      <p class="page-intro">Shows controls relevant to the applicability flags you set in Setup. Update the flags there if your AI system inventory changes.</p>
+      <div id="euContainer"></div>
+    </section>
+
+    <!-- Dashboard -->
+    <section class="view" id="view-dashboard">
+      <div class="eyebrow">Step 03 — Readiness</div>
+      <h1 class="page-title">Governance dashboard</h1>
+      <p class="page-intro" id="dashSubtitle"></p>
+
+      <div class="gauge-row" id="gaugeRow"></div>
+
+      <div class="group-heading"><h2>Maturity by domain — spider view</h2></div>
+      <p style="color:var(--text-muted);font-size:12.5px;margin-top:-6px;margin-bottom:16px;">Filled shape is current maturity by domain; the dashed line is your target level. The bigger the gap between them, the higher the priority for management attention.</p>
+      <div class="radar-row" id="radarRow"></div>
+
+      <div class="group-heading"><h2>Maturity by domain — detail</h2></div>
+      <div class="detail-cols">
+        <div>
+          <h3 class="detail-h">ISO/IEC 42001</h3>
+          <div class="barlist" id="isoBars"></div>
+        </div>
+        <div>
+          <h3 class="detail-h">EU AI Act</h3>
+          <div class="barlist" id="euBars"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="view" id="view-roadmap">
+      <div class="eyebrow">Step 04 — Delivery plan</div>
+      <h1 class="page-title">Roadmap to target maturity</h1>
+      <p class="page-intro">Every control below its target level is prioritised by regulatory criticality × maturity gap, then bucketed into a delivery horizon. Add owners and target quarters, then export.</p>
+      <div class="btn-row no-print">
+        <button class="btn secondary" onclick="exportCSV()">Export CSV</button>
+        <button class="btn secondary" onclick="window.print()">Print / Save as PDF</button>
+      </div>
+      <div id="roadmapContainer"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   DATA MODEL
+--------------------------------------------------------------- */
+const LEVELS = ["0 · None","1 · Initial","2 · Developing","3 · Defined","4 · Managed"];
+
+const isoControls = [
+  {id:'iso1', code:'Cl.5.2 / A.2.2', group:'Governance & Leadership', name:'AI policy & objectives', crit:3,
+    desc:'A documented AI policy, approved by top management, setting objectives consistent with organisational strategy and risk appetite.',
+    action:'Draft and secure executive sign-off on an AI policy covering acceptable use, risk appetite and escalation routes; publish to all staff.'},
+  {id:'iso2', code:'Cl.5.3 / A.3', group:'Governance & Leadership', name:'Roles, responsibilities & governance body', crit:3,
+    desc:'Defined governance structure (e.g. AI governance committee) with clear accountability, RACI, and an accountable executive.',
+    action:'Stand up an AI governance committee with executive sponsor, RACI matrix and terms of reference; schedule recurring cadence.'},
+  {id:'iso3', code:'Cl.6.1 / A.4', group:'Risk & Impact', name:'AI risk assessment methodology', crit:3,
+    desc:'A repeatable method to identify, analyse and evaluate AI-specific risks, integrated with enterprise risk management.',
+    action:'Adopt/adapt an AI risk taxonomy and scoring method; integrate into the enterprise risk register with defined thresholds.'},
+  {id:'iso4', code:'Cl.6.1.4 / A.5', group:'Risk & Impact', name:'AI system impact assessment', crit:3,
+    desc:'Process to assess impact of an AI system on individuals, groups and society before deployment (fairness, rights, safety).',
+    action:'Build an AI impact assessment template and mandate its completion before any system reaches production.'},
+  {id:'iso5', code:'Cl.7.1–7.2 / A.4', group:'Resourcing & Competence', name:'Resources & competence', crit:2,
+    desc:'Adequate resourcing and a competence framework for people performing AI governance, development and oversight roles.',
+    action:'Create a skills matrix for AI-related roles; identify gaps and commission targeted training or hires.'},
+  {id:'iso6', code:'Cl.7.3–7.4', group:'Resourcing & Competence', name:'Awareness & communication', crit:1,
+    desc:'Staff are aware of the AI policy and their responsibilities; a plan exists for internal and external communication.',
+    action:'Launch an organisation-wide AI awareness module and publish a communication plan for internal and external stakeholders.'},
+  {id:'iso7', code:'Cl.7.5 / A.6.2', group:'System Lifecycle', name:'AI system inventory & documented information', crit:3,
+    desc:'A maintained, central inventory of AI systems in use or development, with owner, purpose, data and risk classification.',
+    action:'Build a central AI system register capturing purpose, owner, data sources, risk tier and lifecycle stage for every system.'},
+  {id:'iso8', code:'Cl.8.1 / A.6', group:'System Lifecycle', name:'AI system lifecycle controls', crit:3,
+    desc:'Defined gates across design, development, verification, validation, deployment and decommissioning of AI systems.',
+    action:'Define lifecycle gates (design review, validation, go-live sign-off, decommission) and embed them in delivery process.'},
+  {id:'iso9', code:'A.7', group:'System Lifecycle', name:'Data governance for AI', crit:2,
+    desc:'Controls over data quality, provenance, lineage and representativeness for training, validation and test data.',
+    action:'Establish data quality and provenance checks for training/test data, including bias review, before model sign-off.'},
+  {id:'iso10', code:'A.10', group:'Third Parties', name:'Third-party & supplier management', crit:2,
+    desc:'Due diligence and contractual controls for AI vendors, model providers and outsourced development.',
+    action:'Introduce an AI vendor risk questionnaire and standard contract clauses covering data use, model provenance and audit rights.'},
+  {id:'iso11', code:'A.8', group:'Third Parties', name:'Transparency to interested parties', crit:2,
+    desc:'Clear disclosures to customers, employees and regulators about where and how AI is used.',
+    action:'Publish plain-language disclosures of AI use in customer- and employee-facing materials and privacy notices.'},
+  {id:'iso12', code:'A.9', group:'Operational Controls', name:'Human oversight & use controls', crit:2,
+    desc:'Defined human-in-the-loop or human-on-the-loop mechanisms and usage guidelines for each AI system.',
+    action:'Define and document human oversight mechanisms (review, override, escalation) per system risk tier.'},
+  {id:'iso13', code:'Cl.9', group:'Assurance', name:'Monitoring, measurement & internal audit', crit:2,
+    desc:'KPIs/metrics tracked for AI systems and governance; an internal audit programme covering the AI management system.',
+    action:'Define governance KPIs (e.g. % systems inventoried, incidents, overdue reviews) and add AI to the internal audit plan.'},
+  {id:'iso14', code:'Cl.9.3 / Cl.10', group:'Assurance', name:'Management review & continual improvement', crit:1,
+    desc:'Periodic management review of the AI management system, with nonconformity and corrective action processes.',
+    action:'Schedule recurring management reviews of AI governance performance; formalise a nonconformity/CAPA process.'},
+];
+
+const euControls = [
+  {id:'eu1', code:'Art.6 / Annex III', app:'always', group:'Classification', name:'AI system inventory & risk classification', crit:3,
+    desc:'Every AI system is identified and classified as prohibited, high-risk, limited-risk or minimal-risk.',
+    action:'Classify every AI system against Annex III and Article 5 criteria; record the classification and rationale in the AI register.'},
+  {id:'eu2', code:'Art.5', app:'always', group:'Classification', name:'Prohibited-practices screening', crit:3,
+    desc:'Screening to ensure no system performs a banned practice (e.g. social scoring, manipulative/subliminal techniques, certain biometric categorisation).',
+    action:'Run a prohibited-practices screen against every system in the inventory; remediate or decommission any match immediately.'},
+  {id:'eu3', code:'Art.4', app:'always', group:'Classification', name:'AI literacy', crit:2,
+    desc:'Staff and management have a level of AI literacy proportionate to their role and the systems they build, buy or use.',
+    action:'Deliver role-based AI literacy training for developers, deployers and decision-makers; keep completion records.'},
+  {id:'eu4', code:'Art.9', app:'highRisk', group:'High-Risk System Requirements', name:'Risk management system', crit:3,
+    desc:'A continuous, documented risk management process across the lifecycle of each high-risk AI system.',
+    action:'Implement a lifecycle risk management process per high-risk system, reviewed at each material change.'},
+  {id:'eu5', code:'Art.10', app:'highRisk', group:'High-Risk System Requirements', name:'Data governance & data quality', crit:3,
+    desc:'Training, validation and testing data are relevant, representative and examined for bias, with governance over sourcing.',
+    action:'Document data governance practices for training/validation/test data, including bias examination, per high-risk system.'},
+  {id:'eu6', code:'Art.11 / Annex IV', app:'highRisk', group:'High-Risk System Requirements', name:'Technical documentation', crit:3,
+    desc:'A technical file is maintained for each high-risk system covering design, intended purpose, performance and risks.',
+    action:'Produce and maintain Annex IV technical documentation for each high-risk system before it goes into service.'},
+  {id:'eu7', code:'Art.12', app:'highRisk', group:'High-Risk System Requirements', name:'Record-keeping / automatic logging', crit:2,
+    desc:'High-risk systems automatically log events sufficient to ensure traceability of outputs.',
+    action:'Enable and retain automatic event logs for each high-risk system to a defined retention period.'},
+  {id:'eu8', code:'Art.13', app:'highRisk', group:'High-Risk System Requirements', name:'Transparency & instructions for use', crit:2,
+    desc:'Clear instructions to deployers covering capabilities, limitations and intended use of the system.',
+    action:'Publish instructions for use for each high-risk system, including known limitations and appropriate use conditions.'},
+  {id:'eu9', code:'Art.14', app:'highRisk', group:'High-Risk System Requirements', name:'Human oversight measures', crit:3,
+    desc:'The system is designed to enable effective human oversight, including the ability to intervene or stop it.',
+    action:'Design and document human oversight measures, including a stop/override mechanism, per high-risk system.'},
+  {id:'eu10', code:'Art.15', app:'highRisk', group:'High-Risk System Requirements', name:'Accuracy, robustness & cybersecurity', crit:2,
+    desc:'The system meets appropriate levels of accuracy and is resilient to errors, faults and attempts to manipulate it.',
+    action:'Establish accuracy/robustness testing and cybersecurity hardening as a pre-deployment gate for high-risk systems.'},
+  {id:'eu11', code:'Art.43 / Art.49', app:'highRisk', group:'Conformity & Registration', name:'Conformity assessment & EU database registration', crit:3,
+    desc:'Conformity assessment is completed and the system is registered in the EU database before being placed on the market.',
+    action:'Complete conformity assessment and register each high-risk system in the EU database prior to launch.'},
+  {id:'eu12', code:'Art.72 / Art.73', app:'highRisk', group:'Conformity & Registration', name:'Post-market monitoring & incident reporting', crit:2,
+    desc:'Deployed high-risk systems are monitored, and serious incidents are reported to the relevant authority within required timelines.',
+    action:'Set up post-market monitoring and a serious-incident reporting procedure with defined regulator notification timelines.'},
+  {id:'eu13', code:'Art.50', app:'transparency', group:'Transparency Obligations', name:'User-facing transparency notices', crit:2,
+    desc:'People are told when they are interacting with AI, and synthetic/deepfake content and emotion/biometric inferences are disclosed.',
+    action:'Add clear AI-interaction disclosures and label synthetic content and emotion/biometric-recognition outputs where used.'},
+  {id:'eu14', code:'Art.53', app:'gpai', group:'GPAI Provider Obligations', name:'General-purpose AI model documentation', crit:2,
+    desc:'Technical documentation, a copyright compliance policy and a training-content summary are maintained for GPAI models placed on the market.',
+    action:'Prepare Article 53 technical documentation, a copyright policy and a public training-content summary for each GPAI model.'},
+];
+
+/* ---------------------------------------------------------------
+   STATE
+--------------------------------------------------------------- */
+const state = {
+  org:'', date:'', assessor:'', target:3,
+  flags:{highrisk:false, gpai:false, transparency:false},
+  scores:{} // id -> 0..4
+};
+[...isoControls, ...euControls].forEach(c=>state.scores[c.id]=0);
+
+/* ---------------------------------------------------------------
+   NAV
+--------------------------------------------------------------- */
+function goTo(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('#navRail button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='dashboard') renderDashboard();
+  if(view==='roadmap') renderRoadmap();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('#navRail button').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.view)));
+
+/* ---------------------------------------------------------------
+   RENDER CONTROL LISTS
+--------------------------------------------------------------- */
+function renderControlGroup(container, controls){
+  const groups = {};
+  controls.forEach(c=>{ (groups[c.group] = groups[c.group]||[]).push(c); });
+  container.innerHTML='';
+  Object.entries(groups).forEach(([groupName, items])=>{
+    const gh = document.createElement('div');
+    gh.className='group-heading';
+    gh.innerHTML = `<h2>${groupName}</h2><span class="g-count">${items.length} control${items.length>1?'s':''}</span>`;
+    container.appendChild(gh);
+    items.forEach(c=>container.appendChild(renderControlRow(c)));
+  });
+}
+
+function renderControlRow(c){
+  const row = document.createElement('div');
+  row.className='control';
+  const critLabel = c.crit===3?'critical':c.crit===2?'important':'supporting';
+  row.innerHTML = `
+    <div class="code">${c.code}</div>
+    <div>
+      <div class="c-name"><span class="c-crit crit-${c.crit}">${critLabel}</span>${c.name}</div>
+      <div class="c-desc">${c.desc}</div>
+    </div>
+    <div class="dial">
+      <div class="dial-ticks" data-id="${c.id}">
+        ${[0,1,2,3,4].map(n=>`<div class="tick" data-val="${n}">${n}</div>`).join('')}
+      </div>
+      <div class="dial-label">${LEVELS[state.scores[c.id]]}</div>
+    </div>
+  `;
+  const ticks = row.querySelectorAll('.tick');
+  function paint(){
+    const v = state.scores[c.id];
+    ticks.forEach(t=>t.classList.toggle('on', parseInt(t.dataset.val)<=v));
+    row.querySelector('.dial-label').textContent = LEVELS[v];
+  }
+  ticks.forEach(t=>t.addEventListener('click',()=>{
+    state.scores[c.id] = parseInt(t.dataset.val);
+    paint();
+  }));
+  paint();
+  return row;
+}
+
+function euApplicable(c){
+  if(c.app==='always') return true;
+  if(c.app==='highRisk') return state.flags.highrisk;
+  if(c.app==='gpai') return state.flags.gpai;
+  if(c.app==='transparency') return state.flags.transparency;
+  return true;
+}
+
+function renderISO(){ renderControlGroup(document.getElementById('isoContainer'), isoControls); }
+function renderEU(){
+  const applicable = euControls.filter(euApplicable);
+  const container = document.getElementById('euContainer');
+  if(applicable.length===0){
+    container.innerHTML = '<p class="empty-note">No applicability flags set — showing only universal obligations. Go back to Setup to flag high-risk, GPAI or transparency scenarios.</p>';
+  }
+  renderControlGroup(container, applicable);
+  if(applicable.length===0){
+    // still show 'always' ones even with note above appended before
+  }
+}
+
+/* ---------------------------------------------------------------
+   SETUP WIRING
+--------------------------------------------------------------- */
+document.getElementById('orgName').addEventListener('input', e=>state.org=e.target.value);
+document.getElementById('assessDate').addEventListener('input', e=>state.date=e.target.value);
+document.getElementById('assessorName').addEventListener('input', e=>state.assessor=e.target.value);
+document.getElementById('targetLevel').addEventListener('change', e=>state.target=parseInt(e.target.value));
+document.getElementById('flag-highrisk').addEventListener('change', e=>{state.flags.highrisk=e.target.checked; renderEU();});
+document.getElementById('flag-gpai').addEventListener('change', e=>{state.flags.gpai=e.target.checked; renderEU();});
+document.getElementById('flag-transparency').addEventListener('change', e=>{state.flags.transparency=e.target.checked; renderEU();});
+document.getElementById('assessDate').valueAsDate = new Date();
+state.date = document.getElementById('assessDate').value;
+
+/* ---------------------------------------------------------------
+   DASHBOARD
+--------------------------------------------------------------- */
+function avgScore(controls){
+  if(controls.length===0) return 0;
+  return controls.reduce((s,c)=>s+state.scores[c.id],0)/controls.length;
+}
+function pct(v){ return Math.round((v/4)*100); }
+
+function renderDashboard(){
+  document.getElementById('dashSubtitle').textContent =
+    (state.org? state.org+' — ' : '') + 'Target maturity: Level '+state.target+' ('+LEVELS[state.target].split('· ')[1]+')';
+
+  const euApplicableList = euControls.filter(euApplicable);
+  const isoAvg = avgScore(isoControls);
+  const euAvg = avgScore(euApplicableList);
+  const overall = avgScore([...isoControls, ...euApplicableList]);
+  const gapsCount = [...isoControls, ...euApplicableList].filter(c=>state.scores[c.id] < state.target).length;
+
+  const gaugeRow = document.getElementById('gaugeRow');
+  gaugeRow.innerHTML = `
+    <div class="gauge-card"><div class="g-label">Overall readiness</div><div class="g-value">${pct(overall)}%</div><div class="g-sub">Average maturity ${overall.toFixed(1)} / 4</div></div>
+    <div class="gauge-card"><div class="g-label">ISO/IEC 42001</div><div class="g-value">${pct(isoAvg)}%</div><div class="g-sub">${isoControls.length} controls assessed</div></div>
+    <div class="gauge-card"><div class="g-label">EU AI Act</div><div class="g-value">${pct(euAvg)}%</div><div class="g-sub">${euApplicableList.length} applicable control${euApplicableList.length===1?'':'s'}</div></div>
+    <div class="gauge-card"><div class="g-label">Open gaps</div><div class="g-value">${gapsCount}</div><div class="g-sub">Below target of Level ${state.target}</div></div>
+  `;
+
+  renderBarGroup('isoBars', isoControls);
+  renderBarGroup('euBars', euApplicableList);
+  renderRadars(euApplicableList);
+}
+
+function groupAverages(controls){
+  const groups = {};
+  controls.forEach(c=>{ (groups[c.group]=groups[c.group]||[]).push(c); });
+  return Object.entries(groups).map(([name, items])=>({name, avg: avgScore(items)}));
+}
+
+function radarSVG(axes, target){
+  // axes: [{name, avg}]
+  const n = axes.length;
+  const size = 460, cx = size/2, cy = 190, maxR = 96;
+  const labelR = 1.28; // fraction beyond maxR where label text sits
+  const angle = i => -Math.PI/2 + i*(2*Math.PI/n);
+  const pt = (i, val) => {
+    const r = (val/4)*maxR;
+    return [cx + r*Math.cos(angle(i)), cy + r*Math.sin(angle(i))];
+  };
+  // grid rings at levels 1-4
+  const cLine = '#B7BCAC', cInk = '#101826', cRed = '#A6402F', cText = '#16202E', cMuted = '#5B6570';
+  let grid = '';
+  for(let lvl=1; lvl<=4; lvl++){
+    const ring = axes.map((_,i)=>pt(i,lvl).join(',')).join(' ');
+    grid += `<polygon points="${ring}" fill="none" stroke="${cLine}" stroke-width="1" opacity="${lvl===4?0.9:0.5}"/>`;
+  }
+  // spokes
+  let spokes = '';
+  axes.forEach((_,i)=>{
+    const [x,y] = pt(i,4);
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="${cLine}" stroke-width="1" opacity="0.5"/>`;
+  });
+  // target polygon (dashed)
+  const targetPts = axes.map((_,i)=>pt(i,target).join(',')).join(' ');
+  // current polygon (filled)
+  const curPts = axes.map((a,i)=>pt(i,a.avg).join(',')).join(' ');
+  // labels
+  let labels = '';
+  axes.forEach((a,i)=>{
+    const [x,y] = pt(i, 4*labelR);
+    const cosA = Math.cos(angle(i));
+    const sinA = Math.sin(angle(i));
+    const anchor = Math.abs(cosA) < 0.2 ? 'middle' : (cosA > 0 ? 'start' : 'end');
+    const dy = sinA > 0.4 ? 12 : (sinA < -0.4 ? -6 : 4);
+    labels += `<text x="${x}" y="${y+dy}" font-size="11" font-family="Inter, sans-serif" fill="${cText}" text-anchor="${anchor}">${wrapLabel(a.name)}</text>`;
+    labels += `<text x="${x}" y="${y+dy+13}" font-size="10" font-family='IBM Plex Mono, monospace' fill="${cMuted}" text-anchor="${anchor}">${a.avg.toFixed(1)} / 4</text>`;
+  });
+  return `<svg viewBox="0 0 ${size} ${cy+maxR*labelR+40}" width="100%" style="max-width:440px;display:block;margin:0 auto;overflow:visible;">
+    ${grid}${spokes}
+    <polygon points="${targetPts}" fill="none" stroke="${cRed}" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <polygon points="${curPts}" fill="${cInk}" fill-opacity="0.45" stroke="${cInk}" stroke-width="2"/>
+    ${axes.map((a,i)=>{const [x,y]=pt(i,a.avg);return `<circle cx="${x}" cy="${y}" r="3" fill="${cInk}"/>`;}).join('')}
+    ${labels}
+  </svg>`;
+}
+
+function wrapLabel(name){
+  // shorten long group names for axis labels
+  const short = {
+    'Governance & Leadership':'Governance',
+    'Resourcing & Competence':'Resourcing',
+    'System Lifecycle':'Lifecycle',
+    'Third Parties':'Third Parties',
+    'Operational Controls':'Operations',
+    'High-Risk System Requirements':'High-Risk Reqs',
+    'Conformity & Registration':'Conformity',
+    'Transparency Obligations':'Transparency',
+    'GPAI Provider Obligations':'GPAI',
+  };
+  return short[name] || name;
+}
+
+function renderRadars(euApplicableList){
+  const isoAxes = groupAverages(isoControls);
+  const euAxes = groupAverages(euApplicableList);
+  const row = document.getElementById('radarRow');
+  row.innerHTML = '';
+
+  const isoCard = document.createElement('div');
+  isoCard.className = 'radar-card';
+  isoCard.innerHTML = `<h3>ISO/IEC 42001</h3><div class="radar-sub">${isoAxes.length} domains</div>${radarSVG(isoAxes, state.target)}
+    <div class="radar-legend"><span><span class="swatch fill"></span>Current maturity</span><span><span class="swatch line"></span>Target · Level ${state.target}</span></div>`;
+  row.appendChild(isoCard);
+
+  const euCard = document.createElement('div');
+  euCard.className = 'radar-card';
+  if(euAxes.length < 3){
+    euCard.innerHTML = `<h3>EU AI Act</h3><div class="radar-sub">Needs at least 3 domains to plot — flag more obligations in Setup.</div>`;
+  } else {
+    euCard.innerHTML = `<h3>EU AI Act</h3><div class="radar-sub">${euAxes.length} domains</div>${radarSVG(euAxes, state.target)}
+      <div class="radar-legend"><span><span class="swatch fill"></span>Current maturity</span><span><span class="swatch line"></span>Target · Level ${state.target}</span></div>`;
+  }
+  row.appendChild(euCard);
+}
+
+function renderBarGroup(elId, controls){
+  const groups = {};
+  controls.forEach(c=>{ (groups[c.group]=groups[c.group]||[]).push(c); });
+  const el = document.getElementById(elId);
+  if(controls.length===0){ el.innerHTML='<p class="empty-note">No applicable controls selected.</p>'; return; }
+  el.innerHTML = Object.entries(groups).map(([name, items])=>{
+    const avg = avgScore(items);
+    return `<div class="barrow">
+      <div class="b-top"><span class="b-name">${name}</span><span class="mono">${avg.toFixed(1)} / 4</span></div>
+      <div class="b-track"><div class="b-fill" style="width:${pct(avg)}%"></div><div class="b-target" style="left:${pct(state.target)}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------------------------------------------------------
+   ROADMAP
+--------------------------------------------------------------- */
+function buildRoadmapItems(){
+  const euApplicableList = euControls.filter(euApplicable);
+  const all = [...isoControls.map(c=>({...c, fw:'ISO 42001'})), ...euApplicableList.map(c=>({...c, fw:'EU AI Act'}))];
+  return all.map(c=>{
+    const cur = state.scores[c.id];
+    const gap = Math.max(0, state.target - cur);
+    const priority = gap * c.crit;
+    return {...c, cur, gap, priority};
+  }).filter(c=>c.gap>0).sort((a,b)=>b.priority - a.priority);
+}
+
+const BUCKETS = [
+  {key:'quick', label:'Quick wins', window:'0–3 months', test:p=>p>=9},
+  {key:'near', label:'Near-term', window:'3–6 months', test:p=>p>=6 && p<9},
+  {key:'mid', label:'Mid-term', window:'6–12 months', test:p=>p>=3 && p<6},
+  {key:'long', label:'Long-term', window:'12+ months', test:p=>p<3},
+];
+
+function renderRoadmap(){
+  const items = buildRoadmapItems();
+  const container = document.getElementById('roadmapContainer');
+  if(items.length===0){
+    container.innerHTML = '<p class="empty-note">No gaps against your target maturity — every assessed control meets or exceeds the target level.</p>';
+    return;
+  }
+  container.innerHTML='';
+  BUCKETS.forEach(b=>{
+    const rows = items.filter(i=>b.test(i.priority));
+    if(rows.length===0) return;
+    const wrap = document.createElement('div');
+    wrap.className='rm-bucket';
+    wrap.innerHTML = `<h3>${b.label} <span class="rm-window">${b.window} · ${rows.length} item${rows.length>1?'s':''}</span></h3>`;
+    const table = document.createElement('table');
+    table.className='rm-table';
+    table.innerHTML = `<thead><tr>
+        <th>Control</th><th>Framework</th><th>Current → Target</th><th>Recommended activity</th><th>Owner</th><th>Target quarter</th>
+      </tr></thead><tbody>
+      ${rows.map(r=>`
+        <tr>
+          <td><strong>${r.name}</strong><br><span class="code">${r.code}</span></td>
+          <td><span class="fw-badge">${r.fw}</span></td>
+          <td class="score-shift">${r.cur} → ${state.target}</td>
+          <td>${r.action}</td>
+          <td><input class="owner-input" type="text" placeholder="Assign owner" data-id="${r.id}"></td>
+          <td><select class="owner-input" data-id="${r.id}-q">
+            <option value="">—</option>
+            <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+          </select></td>
+        </tr>`).join('')}
+      </tbody>`;
+    wrap.appendChild(table);
+    container.appendChild(wrap);
+  });
+}
+
+function exportCSV(){
+  const items = buildRoadmapItems();
+  const header = ['Bucket','Window','Framework','Control code','Control name','Current level','Target level','Priority score','Recommended activity'];
+  const rows = items.map(r=>{
+    const bucket = BUCKETS.find(b=>b.test(r.priority));
+    return [bucket.label, bucket.window, r.fw, r.code, r.name, r.cur, state.target, r.priority, r.action]
+      .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ai-governance-roadmap.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------------------------------------------------------------
+   INIT
+--------------------------------------------------------------- */
+renderISO();
+renderEU();
+</script>
+</body>
+</html>
